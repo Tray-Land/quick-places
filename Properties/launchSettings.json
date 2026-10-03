@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "QuickPlaces (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "QuickPlaces (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

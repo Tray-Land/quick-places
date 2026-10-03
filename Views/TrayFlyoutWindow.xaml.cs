@@ -54,6 +54,8 @@ public sealed partial class TrayFlyoutWindow : WindowEx
     private readonly DispatcherQueueTimer _animationTimer;
     private readonly Stopwatch _animationClock = new();
 
+    private SettingsPage? _settingsPage;
+
     private bool _isShowing;
     private bool _isPopupVisible;
     private bool _allowClose;
@@ -120,6 +122,8 @@ public sealed partial class TrayFlyoutWindow : WindowEx
             return;
         }
 
+        // A tray click always lands on the search page, never on settings.
+        ShowMainPage();
         ShowPopup();
     }
 
@@ -143,7 +147,35 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         Activate();
         PInvoke.SetForegroundWindow(_hwnd);
 
-        _page.OnShown();
+        if (IsShowingSettings)
+        {
+            _settingsPage!.OnShown();
+        }
+        else
+        {
+            _page.OnShown();
+        }
+    }
+
+    public bool IsPopupVisible => _isPopupVisible;
+
+    public bool IsShowingSettings => PageHost.Content is SettingsPage;
+
+    public void ShowSettingsPage()
+    {
+        _settingsPage ??= new SettingsPage(ShowMainPage);
+        _page.OnHidden(); // no requests behind the settings page
+        PageHost.Content = _settingsPage;
+        _settingsPage.OnShown();
+    }
+
+    public void ShowMainPage()
+    {
+        PageHost.Content = _page;
+        if (_isPopupVisible)
+        {
+            _page.OnShown();
+        }
     }
 
     public void HidePopup()
@@ -182,6 +214,7 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         _animationTimer.Stop();
         _page.OnHidden();
         _page.Dispose();
+        _settingsPage = null;
 
         _uiSettings.ColorValuesChanged -= OnColorValuesChanged;
         Activated -= OnWindowActivated;
@@ -363,6 +396,13 @@ public sealed partial class TrayFlyoutWindow : WindowEx
     private void Escape_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         args.Handled = true;
-        HidePopup();
+        if (IsShowingSettings)
+        {
+            ShowMainPage();
+        }
+        else
+        {
+            HidePopup();
+        }
     }
 }

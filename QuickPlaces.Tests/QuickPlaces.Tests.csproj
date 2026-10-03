@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Platforms>x64;ARM64</Platforms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.4.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.4.1" />
+  </ItemGroup>
+
+  <!-- The app targets WinUI and can't load in a plain test host: link only the WinRT-free files. -->
+  <ItemGroup>
+    <Compile Include="..\Models\PlaceSummary.cs" Link="Models\PlaceSummary.cs" />
+    <Compile Include="..\Models\PlaceDetails.cs" Link="Models\PlaceDetails.cs" />
+    <Compile Include="..\Services\PlacesParser.cs" Link="Services\PlacesParser.cs" />
+    <Compile Include="..\Services\PlaceFormatting.cs" Link="Services\PlaceFormatting.cs" />
+  </ItemGroup>
+
+</Project>

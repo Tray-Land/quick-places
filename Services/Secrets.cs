@@ -10,10 +10,10 @@ namespace QuickPlaces.Services;
 /// </summary>
 internal static class Secrets
 {
-    private static readonly Lazy<string?> s_exampleApiKey = new(() => GetOAuthString("ExampleApiKey"));
+    private static readonly Lazy<string?> s_googlePlacesApiKey = new(() => GetOAuthString("GooglePlacesApiKey"));
 
-    /// <summary>The example service's API key, or null when OAuth.resw doesn't provide one.</summary>
-    public static string? ExampleApiKey => s_exampleApiKey.Value;
+    /// <summary>The Google Places API key, or null when OAuth.resw doesn't provide one.</summary>
+    public static string? GooglePlacesApiKey => s_googlePlacesApiKey.Value;
 
     private static string? GetOAuthString(string name)
     {

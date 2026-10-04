@@ -58,6 +58,37 @@ internal sealed class PlacesClient
             .ToList();
     }
 
+    /// <summary>Resolves a zip or postal code to a point (the first match), or null if nothing matches.</summary>
+    public async Task<GeoPoint?> GeocodeAsync(string postalCode, CancellationToken ct)
+    {
+        using MemoryStream body = new();
+        using (Utf8JsonWriter w = new(body))
+        {
+            w.WriteStartObject();
+            w.WriteString("textQuery", postalCode);
+            w.WriteNumber("maxResultCount", 1);
+            w.WriteEndObject();
+        }
+
+        ByteArrayContent content = new(body.ToArray());
+        content.Headers.ContentType = new("application/json");
+        using HttpRequestMessage request = new(HttpMethod.Post, Endpoint + "places:searchText") { Content = content };
+        request.Headers.Add("X-Goog-FieldMask", "places.location");
+
+        string json = await SendAsync(request, ct);
+        using JsonDocument doc = JsonDocument.Parse(json);
+        if (doc.RootElement.TryGetProperty("places", out JsonElement places)
+            && places.GetArrayLength() > 0
+            && places[0].TryGetProperty("location", out JsonElement loc)
+            && loc.TryGetProperty("latitude", out JsonElement lat)
+            && loc.TryGetProperty("longitude", out JsonElement lon))
+        {
+            return new GeoPoint(lat.GetDouble(), lon.GetDouble());
+        }
+
+        return null;
+    }
+
     public async Task<PlaceDetails> GetDetailsAsync(string placeId, CancellationToken ct)
     {
         if (_detailsCache.TryGetValue(placeId, out PlaceDetails? cached))

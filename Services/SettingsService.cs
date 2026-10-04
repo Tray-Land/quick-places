@@ -39,6 +39,26 @@ internal static class SettingsService
         set => Set(nameof(ShowResultsOnMap), value);
     }
 
+    /// <summary>The postal code the user entered when Windows location is off, or null.</summary>
+    public static string? ManualPostalCode
+    {
+        get => Get<string?>(nameof(ManualPostalCode), null);
+        set => Set(nameof(ManualPostalCode), value);
+    }
+
+    private static double? GetDouble(string key) => Get<double?>(key, null) is { } v ? v : null;
+
+    /// <summary>Where <see cref="ManualPostalCode"/> was resolved to, or null if none is saved.</summary>
+    public static (double Latitude, double Longitude)? ManualLocation
+    {
+        get => GetDouble("ManualLatitude") is { } lat && GetDouble("ManualLongitude") is { } lon ? (lat, lon) : null;
+        set
+        {
+            Set("ManualLatitude", value?.Latitude);
+            Set("ManualLongitude", value?.Longitude);
+        }
+    }
+
     public static T? GetJson<T>(string key, JsonTypeInfo<T> typeInfo)
     {
         if (Get<string?>(key, null) is not { } json)

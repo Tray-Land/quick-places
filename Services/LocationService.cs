@@ -24,10 +24,9 @@ internal static class LocationService
             return cached;
         }
 
-        GeolocationAccessStatus access = await Geolocator.RequestAccessAsync().AsTask(ct);
-        if (access != GeolocationAccessStatus.Allowed)
+        if (!await RequestAccessAsync(ct))
         {
-            throw new LocationUnavailableException("Location access is off. Turn it on in Windows Settings > Privacy > Location.");
+            return SavedPoint ?? throw new LocationUnavailableException("Location access is off. Turn it on in Windows Settings > Privacy > Location, or enter a zip code.");
         }
 
         try
@@ -42,7 +41,31 @@ internal static class LocationService
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            throw new LocationUnavailableException("Couldn't determine your location.");
+            return SavedPoint ?? throw new LocationUnavailableException("Couldn't determine your location.");
         }
+    }
+
+    /// <summary>Checks Windows location access, asking for it if it hasn't been decided. True when allowed.</summary>
+    public static async Task<bool> RequestAccessAsync(CancellationToken ct)
+    {
+        try
+        {
+            return await Geolocator.RequestAccessAsync().AsTask(ct) == GeolocationAccessStatus.Allowed;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>The location resolved from the zip code the user entered, if any.</summary>
+    public static GeoPoint? SavedPoint =>
+        SettingsService.ManualLocation is var (lat, lon) ? new GeoPoint(lat, lon) : null;
+
+    public static void SaveManual(string postalCode, GeoPoint point)
+    {
+        SettingsService.ManualPostalCode = postalCode;
+        SettingsService.ManualLocation = (point.Latitude, point.Longitude);
+        s_last = null;
     }
 }

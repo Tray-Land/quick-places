@@ -57,7 +57,6 @@ public sealed partial class FlyoutPage : Page, IDisposable
 
         if (Secrets.GooglePlacesApiKey is null)
         {
-            SearchView.Visibility = Visibility.Collapsed;
             MissingKeyPanel.Visibility = Visibility.Visible;
         }
     }
@@ -76,7 +75,7 @@ public sealed partial class FlyoutPage : Page, IDisposable
         if (!_hasShown)
         {
             _hasShown = true;
-            Motion.StaggerIn([.. StartStack.Children], startDelayMs: 60, stepMs: 60);
+            _ = CheckLocationAsync();
         }
 
         if (_resumeOnShow is { } resume)
@@ -101,7 +100,121 @@ public sealed partial class FlyoutPage : Page, IDisposable
             {
                 SearchBox.Focus(FocusState.Programmatic);
             }
+            else if (LocationPanel.Visibility == Visibility.Visible)
+            {
+                ZipBox.Focus(FocusState.Programmatic);
+            }
         });
+    }
+
+    // ---- Location ----------------------------------------------------------------------------
+
+    /// <summary>
+    /// First thing the flyout does: check (and, if undecided, request) Windows location access.
+    /// With access, or a zip code saved earlier, the search screen shows; otherwise it asks for a zip.
+    /// </summary>
+    private async Task CheckLocationAsync()
+    {
+        bool allowed = await LocationService.RequestAccessAsync(CancellationToken.None);
+        if (allowed || LocationService.SavedPoint is not null)
+        {
+            ShowSearchView(usingZip: !allowed);
+        }
+        else
+        {
+            ShowLocationPanel();
+        }
+    }
+
+    private void ShowSearchView(bool usingZip)
+    {
+        LocationPanel.Visibility = Visibility.Collapsed;
+        SearchView.Visibility = Visibility.Visible;
+        ZipNote.Visibility = usingZip ? Visibility.Visible : Visibility.Collapsed;
+        ZipNoteText.Text = $"Searching near {SettingsService.ManualPostalCode}";
+        Motion.StaggerIn([.. StartStack.Children], startDelayMs: 60, stepMs: 60);
+        FocusDefault();
+    }
+
+    private void ShowLocationPanel()
+    {
+        CancelInFlight();
+        SearchView.Visibility = Visibility.Collapsed;
+        LocationPanel.Visibility = Visibility.Visible;
+        ZipBox.Text = SettingsService.ManualPostalCode ?? "";
+        ZipError.Visibility = Visibility.Collapsed;
+        Motion.StaggerIn(LocationPanel.Children, startDelayMs: 40, stepMs: 50);
+        FocusDefault();
+    }
+
+    private void ChangeZip_Click(object sender, RoutedEventArgs e) => ShowLocationPanel();
+
+    private async void RetryLocation_Click(object sender, RoutedEventArgs e)
+    {
+        if (await LocationService.RequestAccessAsync(CancellationToken.None))
+        {
+            ShowSearchView(usingZip: false);
+        }
+        else
+        {
+            ShowZipError("Location is still off. Turn it on in Windows Settings > Privacy > Location, or enter a zip code.");
+        }
+    }
+
+    private void ZipBox_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key == VirtualKey.Enter)
+        {
+            e.Handled = true;
+            _ = SubmitZipAsync();
+        }
+    }
+
+    private void ZipButton_Click(object sender, RoutedEventArgs e) => _ = SubmitZipAsync();
+
+    private void ShowZipError(string message)
+    {
+        ZipError.Text = message;
+        ZipError.Visibility = Visibility.Visible;
+    }
+
+    private async Task SubmitZipAsync()
+    {
+        string zip = ZipBox.Text.Trim();
+        if (zip.Length < 3)
+        {
+            ShowZipError("Enter your zip or postal code.");
+            return;
+        }
+
+        CancellationToken ct = BeginRequest(() => SubmitZipAsync());
+        ZipButton.IsEnabled = false;
+        ZipError.Visibility = Visibility.Collapsed;
+        try
+        {
+            GeoPoint? point = await _client.GeocodeAsync(zip, ct);
+            ct.ThrowIfCancellationRequested();
+            if (point is not { } p)
+            {
+                ShowZipError($"Couldn't find “{zip}”. Check it and try again.");
+                return;
+            }
+
+            LocationService.SaveManual(zip, p);
+            ShowSearchView(usingZip: true);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            ShowZipError(ex is PlacesApiException ? ex.Message : ConnectivityService.IsInternetAvailable ? "Try again in a moment." : "No internet connection.");
+        }
+        finally
+        {
+            ZipButton.IsEnabled = true;
+            EndRequest(ct);
+        }
     }
 
     /// <summary>The flyout hid: abandon any request in flight, and remember to retry it on the next show.</summary>
@@ -261,6 +374,11 @@ public sealed partial class FlyoutPage : Page, IDisposable
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
+        }
+        catch (LocationUnavailableException)
+        {
+            SetSearchState(SearchState.Start);
+            ShowLocationPanel();
         }
         catch (Exception ex)
         {

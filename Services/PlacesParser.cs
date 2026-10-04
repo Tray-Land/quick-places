@@ -31,7 +31,17 @@ internal static class PlacesParser
                 lon = GetDouble(loc, "longitude");
             }
 
-            results.Add(new PlaceSummary(id, name, GetString(place, "shortFormattedAddress") ?? GetString(place, "formattedAddress") ?? "", lat, lon));
+            results.Add(new PlaceSummary(id, name, GetString(place, "shortFormattedAddress") ?? GetString(place, "formattedAddress") ?? "", lat, lon)
+            {
+                TypeLabel = GetTypeLabel(place),
+                Category = GetCategory(place),
+                OpenNow = place.TryGetProperty("currentOpeningHours", out JsonElement oh)
+                    && oh.ValueKind == JsonValueKind.Object
+                    && oh.TryGetProperty("openNow", out JsonElement on)
+                    && on.ValueKind is JsonValueKind.True or JsonValueKind.False
+                        ? on.GetBoolean()
+                        : null,
+            });
         }
 
         return results;
@@ -74,7 +84,36 @@ internal static class PlacesParser
             GetString(root, "websiteUri"),
             GetString(root, "googleMapsUri"),
             hours,
-            openNow);
+            openNow)
+        {
+            TypeLabel = GetTypeLabel(root),
+            Category = GetCategory(root),
+            Rating = root.TryGetProperty("rating", out JsonElement r) && r.ValueKind == JsonValueKind.Number ? r.GetDouble() : null,
+            UserRatingCount = root.TryGetProperty("userRatingCount", out JsonElement c) && c.ValueKind == JsonValueKind.Number ? c.GetInt32() : null,
+            PriceLevel = ParsePriceLevel(GetString(root, "priceLevel")),
+        };
+    }
+
+    /// <summary>Places (New) price levels are enum names; null for unspecified or unknown.</summary>
+    public static int? ParsePriceLevel(string? value) => value switch
+    {
+        "PRICE_LEVEL_FREE" => 0,
+        "PRICE_LEVEL_INEXPENSIVE" => 1,
+        "PRICE_LEVEL_MODERATE" => 2,
+        "PRICE_LEVEL_EXPENSIVE" => 3,
+        "PRICE_LEVEL_VERY_EXPENSIVE" => 4,
+        _ => null,
+    };
+
+    private static string? GetTypeLabel(JsonElement place) =>
+        place.TryGetProperty("primaryTypeDisplayName", out JsonElement label) ? GetString(label, "text") : null;
+
+    private static PlaceCategory GetCategory(JsonElement place)
+    {
+        IEnumerable<string>? types = place.TryGetProperty("types", out JsonElement t) && t.ValueKind == JsonValueKind.Array
+            ? t.EnumerateArray().Where(e => e.ValueKind == JsonValueKind.String).Select(e => e.GetString()!).ToList()
+            : null;
+        return PlaceCategories.FromTypes(GetString(place, "primaryType"), types);
     }
 
     /// <summary>The <c>error.message</c> of a failed response, or null when the body isn't one.</summary>

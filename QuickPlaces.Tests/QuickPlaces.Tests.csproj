@@ -19,8 +19,10 @@
   <ItemGroup>
     <Compile Include="..\Models\PlaceSummary.cs" Link="Models\PlaceSummary.cs" />
     <Compile Include="..\Models\PlaceDetails.cs" Link="Models\PlaceDetails.cs" />
+    <Compile Include="..\Models\PlaceCategory.cs" Link="Models\PlaceCategory.cs" />
     <Compile Include="..\Services\PlacesParser.cs" Link="Services\PlacesParser.cs" />
     <Compile Include="..\Services\PlaceFormatting.cs" Link="Services\PlaceFormatting.cs" />
+    <Compile Include="..\Services\MapBounds.cs" Link="Services\MapBounds.cs" />
   </ItemGroup>
 
 </Project>

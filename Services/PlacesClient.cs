@@ -41,7 +41,11 @@ internal sealed class PlacesClient
         ByteArrayContent content = new(body.ToArray());
         content.Headers.ContentType = new("application/json");
         using HttpRequestMessage request = new(HttpMethod.Post, Endpoint + "places:searchText") { Content = content };
-        request.Headers.Add("X-Goog-FieldMask", "places.id,places.displayName,places.shortFormattedAddress,places.location");
+        // The type fields pick each row's symbol. Open-now (only that subfield of the hours) puts
+        // search in the Text Search Enterprise SKU: it's what lets each row say "Open" or "Closed".
+        request.Headers.Add("X-Goog-FieldMask",
+            "places.id,places.displayName,places.shortFormattedAddress,places.location,places.primaryType,places.primaryTypeDisplayName,places.types,"
+            + "places.currentOpeningHours.openNow");
 
         string json = await SendAsync(request, ct);
         bool metric = RegionInfo.CurrentRegion.IsMetric;
@@ -62,8 +66,11 @@ internal sealed class PlacesClient
         }
 
         using HttpRequestMessage request = new(HttpMethod.Get, Endpoint + "places/" + Uri.EscapeDataString(placeId));
+        // Phone, website and hours already make this an Enterprise request; rating, review count and
+        // price level are in the same SKU, so they cost nothing extra.
         request.Headers.Add("X-Goog-FieldMask",
-            "id,displayName,formattedAddress,nationalPhoneNumber,internationalPhoneNumber,websiteUri,googleMapsUri,regularOpeningHours,currentOpeningHours");
+            "id,displayName,formattedAddress,nationalPhoneNumber,internationalPhoneNumber,websiteUri,googleMapsUri,regularOpeningHours,currentOpeningHours,"
+            + "primaryType,primaryTypeDisplayName,types,rating,userRatingCount,priceLevel");
 
         PlaceDetails details = PlacesParser.ParseDetails(await SendAsync(request, ct));
         _detailsCache[placeId] = details;

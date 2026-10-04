@@ -1,6 +1,6 @@
 namespace QuickPlaces.Models;
 
-/// <summary>What the detail view shows for one place: contact info and opening hours.</summary>
+/// <summary>What the detail view shows for one place: contact info, rating and opening hours.</summary>
 public sealed record PlaceDetails(
     string Id,
     string Name,
@@ -10,4 +10,17 @@ public sealed record PlaceDetails(
     string? Website,
     string? MapsUri,
     IReadOnlyList<string> WeekdayHours,
-    bool? OpenNow);
+    bool? OpenNow)
+{
+    public string? TypeLabel { get; init; }
+
+    public PlaceCategory Category { get; init; }
+
+    /// <summary>Average review rating, 1 to 5.</summary>
+    public double? Rating { get; init; }
+
+    public int? UserRatingCount { get; init; }
+
+    /// <summary>0 (free) to 4 (very expensive), or null when Google doesn't say.</summary>
+    public int? PriceLevel { get; init; }
+}

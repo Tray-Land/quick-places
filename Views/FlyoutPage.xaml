@@ -4,9 +4,96 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:QuickPlaces.Models"
+    xmlns:views="using:QuickPlaces.Views"
     Background="Transparent">
 
-    <Grid Padding="16,12,12,16" RowSpacing="12">
+    <Page.Resources>
+        <!--
+            Elements built in code take these styles, so their ThemeResource brushes follow the
+            flyout's (taskbar) theme rather than the app theme.
+        -->
+        <Style x:Key="StarOutlineStyle" TargetType="FontIcon">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Glyph" Value="&#xE734;" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+        </Style>
+        <Style x:Key="StarFillStyle" TargetType="FontIcon">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{ThemeResource SystemFillColorCautionBrush}" />
+        </Style>
+        <Style x:Key="HoursRowStyle" TargetType="Grid">
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="-8,0" />
+            <Setter Property="ColumnSpacing" Value="12" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style
+            x:Key="HoursTodayRowStyle"
+            BasedOn="{StaticResource HoursRowStyle}"
+            TargetType="Grid">
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+        </Style>
+        <Style x:Key="HoursDayStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
+        <Style x:Key="HoursTodayDayStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+        </Style>
+        <Style x:Key="HoursTextStyle" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
+        <Style x:Key="HoursTodayTextStyle" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+        </Style>
+
+        <Style
+            x:Key="ViewModeToggleStyle"
+            BasedOn="{StaticResource DefaultToggleButtonStyle}"
+            TargetType="ToggleButton">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!--  One skeleton row, matching a result row's shape.  -->
+        <DataTemplate x:Key="SkeletonRowTemplate">
+            <Grid Padding="10,8" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border
+                    Width="40"
+                    Height="40"
+                    CornerRadius="10"
+                    Style="{StaticResource SkeletonBlockStyle}" />
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Spacing="6">
+                    <Border
+                        Width="150"
+                        Height="12"
+                        HorizontalAlignment="Left"
+                        Style="{StaticResource SkeletonBlockStyle}" />
+                    <Border
+                        Width="210"
+                        Height="10"
+                        HorizontalAlignment="Left"
+                        Style="{StaticResource SkeletonBlockStyle}" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid Padding="16,12,16,16" RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -14,15 +101,15 @@
         </Grid.RowDefinitions>
 
         <!--  Header  -->
-        <Grid ColumnSpacing="4">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Button
                 x:Name="BackButton"
+                Margin="-6,0,4,0"
                 AutomationProperties.Name="Back to results"
                 Click="BackButton_Click"
                 Style="{StaticResource FlyoutIconButtonStyle}"
@@ -34,195 +121,820 @@
                 x:Name="TitleText"
                 Grid.Column="1"
                 VerticalAlignment="Center"
-                Style="{StaticResource SubtitleTextBlockStyle}"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                FontSize="16"
                 Text="Quick Places"
                 TextTrimming="CharacterEllipsis" />
-            <ProgressRing
-                x:Name="LoadingRing"
-                Grid.Column="2"
-                Width="16"
-                Height="16"
-                Margin="0,0,4,0"
-                IsActive="False" />
             <Button
-                Grid.Column="3"
+                x:Name="SettingsButton"
+                Grid.Column="2"
+                Margin="0,0,-6,0"
                 AutomationProperties.Name="Settings"
                 Click="SettingsButton_Click"
                 Style="{StaticResource FlyoutIconButtonStyle}"
                 ToolTipService.ToolTip="Settings">
-                <FontIcon FontSize="14" Glyph="&#xE713;" />
+                <FontIcon
+                    x:Name="SettingsGlyph"
+                    FontSize="14"
+                    Glyph="&#xE713;" />
             </Button>
         </Grid>
 
         <InfoBar
             x:Name="StatusBar"
             Grid.Row="1"
-            IsClosable="False"
+            IsClosable="True"
             IsOpen="False"
             Severity="Warning" />
 
         <!--  Missing key  -->
-        <TextBlock
-            x:Name="MissingKeyText"
+        <StackPanel
+            x:Name="MissingKeyPanel"
             Grid.Row="2"
-            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-            Text="Add GooglePlacesApiKey to OAuth.resw and rebuild."
-            TextWrapping="Wrap"
-            Visibility="Collapsed" />
+            Margin="0,48,0,0"
+            HorizontalAlignment="Center"
+            Spacing="12"
+            Visibility="Collapsed">
+            <Border
+                Width="56"
+                Height="56"
+                HorizontalAlignment="Center"
+                Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                CornerRadius="16">
+                <FontIcon
+                    FontSize="24"
+                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    Glyph="&#xE8D7;" />
+            </Border>
+            <TextBlock
+                HorizontalAlignment="Center"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="An API key is needed" />
+            <TextBlock
+                MaxWidth="260"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="Add GooglePlacesApiKey to OAuth.resw and rebuild."
+                TextAlignment="Center"
+                TextWrapping="Wrap" />
+        </StackPanel>
 
         <!--  Search  -->
         <Grid
-            x:Name="SearchPanel"
+            x:Name="SearchView"
             Grid.Row="2"
-            RowSpacing="8">
+            RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <Grid ColumnSpacing="8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBox
-                    x:Name="SearchBox"
-                    AutomationProperties.Name="Search nearby"
-                    KeyDown="SearchBox_KeyDown"
-                    PlaceholderText="Search nearby: pizza, pharmacy, plumber" />
-                <Button
-                    Grid.Column="1"
-                    AutomationProperties.Name="Search"
-                    Click="SearchButton_Click"
-                    Style="{StaticResource AccentButtonStyle}">
-                    <FontIcon FontSize="14" Glyph="&#xE721;" />
-                </Button>
-            </Grid>
-            <ListView
-                x:Name="ResultsList"
+
+            <AutoSuggestBox
+                x:Name="SearchBox"
+                AutomationProperties.Name="Search nearby"
+                PlaceholderText="Search nearby: pizza, pharmacy, plumber"
+                QueryIcon="Find"
+                QuerySubmitted="SearchBox_QuerySubmitted"
+                TextChanged="SearchBox_TextChanged" />
+
+            <!--  Start: hero, quick categories, recent searches  -->
+            <ScrollViewer
+                x:Name="StartPanel"
                 Grid.Row="1"
-                IsItemClickEnabled="True"
-                ItemClick="ResultsList_ItemClick"
-                SelectionMode="None">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="models:PlaceSummary">
-                        <Grid Padding="0,8" ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Spacing="2">
-                                <TextBlock
-                                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                                    Text="{x:Bind Name}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Text="{x:Bind Address}"
-                                    TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
-                            <TextBlock
-                                Grid.Column="1"
-                                VerticalAlignment="Center"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="{x:Bind DistanceText}" />
+                Margin="0,0,-12,0"
+                Padding="0,0,12,0">
+                <StackPanel x:Name="StartStack" Spacing="18">
+                    <Grid Margin="2,4,0,0" ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid x:Name="HeroBadge" Width="52" Height="52">
+                            <Ellipse Fill="{ThemeResource AccentFillColorDefaultBrush}" Opacity="0.18" />
+                            <Ellipse
+                                Width="38"
+                                Height="38"
+                                Fill="{ThemeResource AccentFillColorDefaultBrush}" />
+                            <FontIcon
+                                FontSize="18"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE81D;" />
                         </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-            <TextBlock
-                x:Name="EmptyText"
+                        <StackPanel
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Spacing="2">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" Text="What's nearby?" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Search, or tap a category. Results start closest to you."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+
+                    <ItemsRepeater x:Name="QuickRepeater">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout
+                                ItemsStretch="Fill"
+                                MaximumRowsOrColumns="4"
+                                MinColumnSpacing="4"
+                                MinItemWidth="76"
+                                MinRowSpacing="6" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="models:QuickCategory">
+                                <Button
+                                    Padding="4,8,4,6"
+                                    AutomationProperties.Name="{x:Bind Label}"
+                                    Click="QuickTile_Click"
+                                    Loaded="QuickTile_Loaded"
+                                    Style="{StaticResource BareButtonStyle}"
+                                    Tag="{x:Bind Query}">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="6">
+                                        <Border
+                                            Width="46"
+                                            Height="46"
+                                            HorizontalAlignment="Center"
+                                            Background="{x:Bind views:PlaceVisuals.CategoryBrush(Category)}"
+                                            CornerRadius="14">
+                                            <FontIcon
+                                                FontSize="20"
+                                                Foreground="White"
+                                                Glyph="{x:Bind Glyph}" />
+                                        </Border>
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind Label}" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+
+                    <StackPanel x:Name="RecentPanel" Spacing="2">
+                        <Grid Margin="2,0,0,4">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource BodyStrongTextBlockStyle}"
+                                Text="Recent" />
+                            <HyperlinkButton
+                                Padding="6,2"
+                                HorizontalAlignment="Right"
+                                AutomationProperties.Name="Clear recent searches"
+                                Click="ClearRecent_Click"
+                                Content="Clear"
+                                FontSize="12" />
+                        </Grid>
+                        <ItemsRepeater x:Name="RecentRepeater">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Button
+                                        Padding="8,7"
+                                        AutomationProperties.Name="{x:Bind}"
+                                        Click="RecentItem_Click"
+                                        Style="{StaticResource BareButtonStyle}"
+                                        Tag="{x:Bind}">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon
+                                                FontSize="14"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Glyph="&#xE81C;" />
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                Text="{x:Bind}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <FontIcon
+                                                Grid.Column="2"
+                                                FontSize="11"
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                Glyph="&#xE76C;" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!--  Loading: skeleton rows  -->
+            <StackPanel
+                x:Name="SkeletonPanel"
                 Grid.Row="1"
-                Margin="4,8,0,0"
-                VerticalAlignment="Top"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="Type what you're looking for and press Enter."
-                TextWrapping="Wrap" />
+                Spacing="2"
+                Visibility="Collapsed">
+                <ContentControl ContentTemplate="{StaticResource SkeletonRowTemplate}" />
+                <ContentControl ContentTemplate="{StaticResource SkeletonRowTemplate}" />
+                <ContentControl ContentTemplate="{StaticResource SkeletonRowTemplate}" />
+                <ContentControl ContentTemplate="{StaticResource SkeletonRowTemplate}" />
+                <ContentControl ContentTemplate="{StaticResource SkeletonRowTemplate}" />
+                <ContentControl ContentTemplate="{StaticResource SkeletonRowTemplate}" />
+            </StackPanel>
+
+            <!--  Results  -->
+            <Grid
+                x:Name="ResultsPanel"
+                Grid.Row="1"
+                RowSpacing="4"
+                Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        x:Name="ResultsHeader"
+                        Margin="2,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="NoWrap" />
+                    <!--  List / map switch, remembered between searches  -->
+                    <StackPanel
+                        Grid.Column="1"
+                        Padding="2"
+                        Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                        CornerRadius="6"
+                        Orientation="Horizontal"
+                        Spacing="2">
+                        <ToggleButton
+                            x:Name="ListModeButton"
+                            AutomationProperties.Name="Show results as a list"
+                            Click="ListModeButton_Click"
+                            Style="{StaticResource ViewModeToggleStyle}"
+                            ToolTipService.ToolTip="List">
+                            <FontIcon FontSize="13" Glyph="&#xE8FD;" />
+                        </ToggleButton>
+                        <ToggleButton
+                            x:Name="MapModeButton"
+                            AutomationProperties.Name="Show results on a map"
+                            Click="MapModeButton_Click"
+                            Style="{StaticResource ViewModeToggleStyle}"
+                            ToolTipService.ToolTip="Map">
+                            <FontIcon FontSize="13" Glyph="&#xE707;" />
+                        </ToggleButton>
+                    </StackPanel>
+                </Grid>
+                <ListView
+                    x:Name="ResultsList"
+                    Grid.Row="1"
+                    Margin="-4,0,-12,0"
+                    Padding="0,0,8,0"
+                    ContainerContentChanging="ResultsList_ContainerContentChanging"
+                    IsItemClickEnabled="True"
+                    ItemClick="ResultsList_ItemClick"
+                    SelectionMode="None">
+                    <ListView.ItemContainerTransitions>
+                        <TransitionCollection />
+                    </ListView.ItemContainerTransitions>
+                    <ListView.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
+                            <Setter Property="Padding" Value="8,0,10,0" />
+                            <Setter Property="Margin" Value="0,1" />
+                            <Setter Property="MinHeight" Value="60" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:PlaceSummary">
+                            <Grid
+                                Padding="0,8"
+                                AutomationProperties.Name="{x:Bind Name}"
+                                ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border
+                                    x:Name="IconTile"
+                                    Width="40"
+                                    Height="40"
+                                    VerticalAlignment="Center"
+                                    Background="{x:Bind views:PlaceVisuals.CategoryBrush(Category)}"
+                                    CornerRadius="10">
+                                    <FontIcon
+                                        FontSize="18"
+                                        Foreground="White"
+                                        Glyph="{x:Bind Glyph}" />
+                                </Border>
+                                <StackPanel
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Spacing="1">
+                                    <TextBlock
+                                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                                        Text="{x:Bind Name}"
+                                        TextWrapping="NoWrap"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Text="{x:Bind Subtitle}"
+                                        TextWrapping="NoWrap"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <!--  Distance, and open/closed underneath when Google says  -->
+                                <StackPanel
+                                    Grid.Column="2"
+                                    VerticalAlignment="Center"
+                                    Spacing="4">
+                                    <Border
+                                        HorizontalAlignment="Right"
+                                        Style="{StaticResource PillBorderStyle}"
+                                        Visibility="{x:Bind views:PlaceVisuals.VisibleIfText(DistanceText)}">
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind DistanceText}" />
+                                    </Border>
+                                    <StackPanel
+                                        Margin="0,0,8,0"
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal"
+                                        Spacing="5"
+                                        Visibility="{x:Bind views:PlaceVisuals.VisibleIf(IsOpenNow)}">
+                                        <Ellipse
+                                            Width="6"
+                                            Height="6"
+                                            VerticalAlignment="Center"
+                                            Fill="{ThemeResource SystemFillColorSuccessBrush}" />
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="Open" />
+                                    </StackPanel>
+                                    <StackPanel
+                                        Margin="0,0,8,0"
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal"
+                                        Spacing="5"
+                                        Visibility="{x:Bind views:PlaceVisuals.VisibleIf(IsClosedNow)}">
+                                        <Ellipse
+                                            Width="6"
+                                            Height="6"
+                                            VerticalAlignment="Center"
+                                            Fill="{ThemeResource SystemFillColorCriticalBrush}" />
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="Closed" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <!--
+                    Map: the MapControl is created the first time this shows (see EnsureMap), so
+                    list-only use never loads it or fetches a tile.
+                -->
+                <Grid
+                    x:Name="MapPanel"
+                    Grid.Row="1"
+                    Margin="0,4,0,0"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Visibility="Collapsed">
+                    <Border x:Name="MapHost" />
+                    <!--  Hides the map's light-gray clear color until its first tiles have drawn (RevealMap)  -->
+                    <Border
+                        x:Name="MapCover"
+                        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                        IsHitTestVisible="False" />
+                    <!--  The hovered pin's name  -->
+                    <Border
+                        x:Name="MapHoverCard"
+                        Margin="10"
+                        Padding="10,6"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        IsHitTestVisible="False"
+                        Visibility="Collapsed">
+                        <StackPanel Spacing="1">
+                            <TextBlock
+                                x:Name="MapHoverName"
+                                MaxWidth="260"
+                                Style="{StaticResource BodyStrongTextBlockStyle}"
+                                TextTrimming="CharacterEllipsis"
+                                TextWrapping="NoWrap" />
+                            <TextBlock
+                                x:Name="MapHoverSubtitle"
+                                MaxWidth="260"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                TextTrimming="CharacterEllipsis"
+                                TextWrapping="NoWrap" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!--  No results  -->
+            <StackPanel
+                x:Name="EmptyPanel"
+                Grid.Row="1"
+                Margin="0,40,0,0"
+                HorizontalAlignment="Center"
+                Spacing="10"
+                Visibility="Collapsed">
+                <Border
+                    x:Name="EmptyBadge"
+                    Width="56"
+                    Height="56"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                    CornerRadius="28">
+                    <FontIcon
+                        FontSize="22"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Glyph="&#xE721;" />
+                </Border>
+                <TextBlock
+                    x:Name="EmptyText"
+                    MaxWidth="280"
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Try a broader word, like &quot;food&quot; or &quot;store&quot;."
+                    TextAlignment="Center" />
+            </StackPanel>
         </Grid>
 
         <!--  Details  -->
         <ScrollViewer
-            x:Name="DetailPanel"
+            x:Name="DetailView"
             Grid.Row="2"
+            Margin="0,0,-12,0"
             Padding="0,0,12,0"
             Visibility="Collapsed">
-            <StackPanel Spacing="12">
-                <StackPanel Spacing="2">
-                    <TextBlock
-                        x:Name="AddressText"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        IsTextSelectionEnabled="True"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        x:Name="OpenNowText"
-                        Style="{StaticResource BodyStrongTextBlockStyle}"
-                        Visibility="Collapsed" />
+            <StackPanel x:Name="DetailStack" Spacing="12">
+
+                <!--  Hero: the connected animation lands on HeroTile  -->
+                <Grid Margin="0,2,0,0" ColumnSpacing="14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border
+                        x:Name="HeroTile"
+                        Width="64"
+                        Height="64"
+                        VerticalAlignment="Top"
+                        CornerRadius="16">
+                        <FontIcon
+                            x:Name="HeroGlyph"
+                            FontSize="28"
+                            Foreground="White" />
+                    </Border>
+                    <StackPanel
+                        x:Name="HeroText"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Spacing="3">
+                        <TextBlock
+                            x:Name="HeroName"
+                            IsTextSelectionEnabled="True"
+                            MaxLines="2"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            FontSize="18"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            x:Name="HeroSubtitle"
+                            TextWrapping="NoWrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+
+                <!--  Loading skeleton for everything below the hero  -->
+                <StackPanel
+                    x:Name="DetailSkeleton"
+                    Spacing="12"
+                    Visibility="Collapsed">
+                    <Border
+                        Width="180"
+                        Height="14"
+                        HorizontalAlignment="Left"
+                        Style="{StaticResource SkeletonBlockStyle}" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Border Height="62" CornerRadius="8" Style="{StaticResource SkeletonBlockStyle}" />
+                        <Border Grid.Column="1" Height="62" CornerRadius="8" Style="{StaticResource SkeletonBlockStyle}" />
+                        <Border Grid.Column="2" Height="62" CornerRadius="8" Style="{StaticResource SkeletonBlockStyle}" />
+                        <Border Grid.Column="3" Height="62" CornerRadius="8" Style="{StaticResource SkeletonBlockStyle}" />
+                    </Grid>
+                    <Border Height="120" CornerRadius="8" Style="{StaticResource SkeletonBlockStyle}" />
+                    <Border Height="160" CornerRadius="8" Style="{StaticResource SkeletonBlockStyle}" />
                 </StackPanel>
 
-                <!--  Phone + QR  -->
-                <Border
-                    Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock
-                            x:Name="PhoneText"
-                            Style="{StaticResource TitleTextBlockStyle}"
-                            IsTextSelectionEnabled="True" />
-                        <StackPanel
-                            x:Name="QrPanel"
-                            HorizontalAlignment="Center"
-                            Spacing="6">
+                <!--  Status, rating, price  -->
+                <StackPanel
+                    x:Name="StatusRow"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <Border
+                        x:Name="OpenPill"
+                        Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
+                        Style="{StaticResource PillBorderStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse
+                                Width="7"
+                                Height="7"
+                                VerticalAlignment="Center"
+                                Fill="{ThemeResource SystemFillColorSuccessBrush}" />
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Open now" />
+                        </StackPanel>
+                    </Border>
+                    <Border
+                        x:Name="ClosedPill"
+                        Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                        Style="{StaticResource PillBorderStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse
+                                Width="7"
+                                Height="7"
+                                VerticalAlignment="Center"
+                                Fill="{ThemeResource SystemFillColorCriticalBrush}" />
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Closed" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock
+                        x:Name="TodayHoursText"
+                            TextWrapping="NoWrap"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <StackPanel
+                    x:Name="RatingRow"
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <TextBlock
+                        x:Name="RatingText"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <StackPanel
+                        x:Name="StarsPanel"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="1" />
+                    <TextBlock
+                        x:Name="RatingCountText"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}" />
+                    <TextBlock
+                        x:Name="PriceText"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}" />
+                </StackPanel>
+
+                <!--  Actions  -->
+                <Grid x:Name="ActionBar" ColumnSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Button
+                        x:Name="DirectionsButton"
+                        AutomationProperties.Name="Directions in Google Maps"
+                        Click="DirectionsButton_Click"
+                        Style="{StaticResource BareButtonStyle}"
+                        ToolTipService.ToolTip="Open in Google Maps">
+                        <StackPanel Spacing="5">
                             <Border
-                                Width="168"
-                                Height="168"
-                                Background="White"
-                                CornerRadius="4">
-                                <Image
-                                    x:Name="QrImage"
-                                    AutomationProperties.Name="QR code to call this number from your phone"
-                                    Stretch="Uniform" />
+                                Width="40"
+                                Height="40"
+                                HorizontalAlignment="Center"
+                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                CornerRadius="20">
+                                <FontIcon
+                                    FontSize="16"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE816;" />
                             </Border>
                             <TextBlock
                                 HorizontalAlignment="Center"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Scan with your phone's camera to call" />
+                                Text="Directions" />
                         </StackPanel>
-                        <Button
-                            x:Name="CopyPhoneButton"
-                            HorizontalAlignment="Stretch"
-                            Click="CopyPhoneButton_Click"
-                            Content="Copy number" />
+                    </Button>
+                    <Button
+                        x:Name="WebsiteButton"
+                        Grid.Column="1"
+                        AutomationProperties.Name="Open website"
+                        Click="WebsiteButton_Click"
+                        Style="{StaticResource BareButtonStyle}">
+                        <StackPanel Spacing="5">
+                            <Border
+                                Width="40"
+                                Height="40"
+                                HorizontalAlignment="Center"
+                                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="20">
+                                <FontIcon
+                                    FontSize="16"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    Glyph="&#xE774;" />
+                            </Border>
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Website" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        x:Name="CopyPhoneButton"
+                        Grid.Column="2"
+                        AutomationProperties.Name="Copy phone number"
+                        ToolTipService.ToolTip="Copy phone number"
+                        Click="CopyPhoneButton_Click"
+                        Style="{StaticResource BareButtonStyle}">
+                        <StackPanel Spacing="5">
+                            <Border
+                                Width="40"
+                                Height="40"
+                                HorizontalAlignment="Center"
+                                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="20">
+                                <FontIcon
+                                    x:Name="CopyPhoneGlyph"
+                                    FontSize="16"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    Glyph="&#xE717;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="CopyPhoneLabel"
+                                HorizontalAlignment="Center"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Phone"
+                                TextWrapping="NoWrap" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        x:Name="CopyAddressButton"
+                        Grid.Column="3"
+                        AutomationProperties.Name="Copy address"
+                        Click="CopyAddressButton_Click"
+                        ToolTipService.ToolTip="Copy address"
+                        Style="{StaticResource BareButtonStyle}">
+                        <StackPanel Spacing="5">
+                            <Border
+                                Width="40"
+                                Height="40"
+                                HorizontalAlignment="Center"
+                                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="20">
+                                <FontIcon
+                                    x:Name="CopyAddressGlyph"
+                                    FontSize="16"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    Glyph="&#xE8C8;" />
+                            </Border>
+                            <TextBlock
+                                x:Name="CopyAddressLabel"
+                                HorizontalAlignment="Center"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Address"
+                                TextWrapping="NoWrap" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!--  Call from your phone  -->
+                <Border x:Name="PhoneCard" Style="{StaticResource CardBorderStyle}">
+                    <Grid ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    Glyph="&#xE8EA;" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="Call from your phone" />
+                            </StackPanel>
+                            <TextBlock
+                                x:Name="PhoneText"
+                                IsTextSelectionEnabled="True"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                FontSize="18"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                x:Name="QrHint"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Point your camera at the code and tap to call."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Border
+                            x:Name="QrFrame"
+                            Grid.Column="1"
+                            Width="116"
+                            Height="116"
+                            Padding="6"
+                            Background="White"
+                            CornerRadius="8">
+                            <Image
+                                x:Name="QrImage"
+                                AutomationProperties.Name="QR code to call this number from your phone"
+                                Stretch="Uniform" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!--  Hours  -->
+                <Border x:Name="HoursCard" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon
+                                FontSize="14"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                Glyph="&#xE917;" />
+                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Hours" />
+                        </StackPanel>
+                        <StackPanel x:Name="HoursPanel" Spacing="1" />
+                        <TextBlock
+                            x:Name="NoHoursText"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="No hours listed."
+                            Visibility="Collapsed" />
                     </StackPanel>
                 </Border>
 
-                <!--  Links  -->
-                <StackPanel Spacing="4">
-                    <HyperlinkButton
-                        x:Name="WebsiteLink"
-                        Padding="0"
-                        Click="WebsiteLink_Click" />
-                    <HyperlinkButton
-                        x:Name="MapsLink"
-                        Padding="0"
-                        Click="MapsLink_Click"
-                        Content="Open in Google Maps" />
-                </StackPanel>
-
-                <!--  Hours  -->
-                <StackPanel Spacing="2">
-                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Hours" />
-                    <StackPanel x:Name="HoursPanel" Spacing="2" />
-                    <TextBlock
-                        x:Name="NoHoursText"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="No hours listed."
-                        Visibility="Collapsed" />
-                </StackPanel>
+                <!--  Address  -->
+                <Border x:Name="AddressCard" Style="{StaticResource CardBorderStyle}">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon
+                            Margin="0,2,0,0"
+                            VerticalAlignment="Top"
+                            FontSize="14"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            Glyph="&#xE707;" />
+                        <TextBlock
+                            x:Name="AddressText"
+                            Grid.Column="1"
+                            IsTextSelectionEnabled="True"
+                            TextWrapping="Wrap" />
+                    </Grid>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -345,6 +345,13 @@ public sealed partial class TrayFlyoutWindow : WindowEx
     {
         if (args.WindowActivationState != WindowActivationState.Deactivated)
         {
+            // Activation gives focus to the first tab stop; on the activation that follows a
+            // show, hand it to the search box instead.
+            if (_isShowing && !IsShowingSettings)
+            {
+                _page.FocusDefault();
+            }
+
             _isShowing = false;
             _hideTimer.Stop();
             return;
@@ -400,7 +407,7 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         {
             ShowMainPage();
         }
-        else
+        else if (!_page.TryGoBack())
         {
             HidePopup();
         }

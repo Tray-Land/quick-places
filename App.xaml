@@ -20,6 +20,42 @@
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderThickness" Value="0" />
             </Style>
+
+            <!--  A surface inside the flyout: the shell's card look.  -->
+            <Style x:Key="CardBorderStyle" TargetType="Border">
+                <Setter Property="Padding" Value="14,12" />
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="8" />
+            </Style>
+
+            <!--  Placeholder blocks shown (and pulsed) while something loads.  -->
+            <Style x:Key="SkeletonBlockStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource ControlFillColorSecondaryBrush}" />
+                <Setter Property="CornerRadius" Value="4" />
+            </Style>
+
+            <!--  Small rounded label: distance, open/closed.  -->
+            <Style x:Key="PillBorderStyle" TargetType="Border">
+                <Setter Property="Padding" Value="8,2,8,3" />
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="Background" Value="{ThemeResource ControlFillColorSecondaryBrush}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+
+            <!--  A borderless button whose content draws its own look (tiles, action buttons, rows).  -->
+            <Style
+                x:Key="BareButtonStyle"
+                BasedOn="{StaticResource DefaultButtonStyle}"
+                TargetType="Button">
+                <Setter Property="Padding" Value="4" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="CornerRadius" Value="8" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

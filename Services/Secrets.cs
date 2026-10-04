@@ -15,6 +15,11 @@ internal static class Secrets
     /// <summary>The Google Places API key, or null when OAuth.resw doesn't provide one.</summary>
     public static string? GooglePlacesApiKey => s_googlePlacesApiKey.Value;
 
+    private static readonly Lazy<string?> s_azureMapsKey = new(() => GetOAuthString("AzureMapsKey"));
+
+    /// <summary>The Azure Maps subscription key for the results map, or null to fall back to OpenStreetMap tiles.</summary>
+    public static string? AzureMapsKey => s_azureMapsKey.Value;
+
     private static string? GetOAuthString(string name)
     {
         try

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Windows.Storage;
 
@@ -22,6 +23,20 @@ internal static class SettingsService
     {
         get => Get(nameof(HasLaunchedBefore), false);
         set => Set(nameof(HasLaunchedBefore), value);
+    }
+
+    /// <summary>The last few searches, newest first, offered as chips on the start screen.</summary>
+    public static IReadOnlyList<string> RecentSearches
+    {
+        get => GetJson(nameof(RecentSearches), SettingsJsonContext.Default.ListString) ?? [];
+        set => SetJson(nameof(RecentSearches), value.ToList(), SettingsJsonContext.Default.ListString);
+    }
+
+    /// <summary>Show search results on a map instead of a list.</summary>
+    public static bool ShowResultsOnMap
+    {
+        get => Get(nameof(ShowResultsOnMap), false);
+        set => Set(nameof(ShowResultsOnMap), value);
     }
 
     public static T? GetJson<T>(string key, JsonTypeInfo<T> typeInfo)
@@ -77,3 +92,6 @@ internal static class SettingsService
         }
     }
 }
+
+[JsonSerializable(typeof(List<string>))]
+internal sealed partial class SettingsJsonContext : JsonSerializerContext;

@@ -41,4 +41,8 @@
     <value></value>
     <comment>Google Places API (New) key. Enable Places API (New) in Google Cloud and restrict the key to it.</comment>
   </data>
+  <data name="AzureMapsKey" xml:space="preserve">
+    <value></value>
+    <comment>Azure Maps subscription key for the results map (Azure portal &gt; Azure Maps account &gt; Authentication &gt; Primary Key). Optional: without it the map uses OpenStreetMap tiles.</comment>
+  </data>
 </root>

@@ -45,7 +45,7 @@ internal sealed class PlacesClient
         // search in the Text Search Enterprise SKU: it's what lets each row say "Open" or "Closed".
         request.Headers.Add("X-Goog-FieldMask",
             "places.id,places.displayName,places.shortFormattedAddress,places.location,places.primaryType,places.primaryTypeDisplayName,places.types,"
-            + "places.currentOpeningHours.openNow");
+            + "places.currentOpeningHours.openNow,places.currentOpeningHours.nextCloseTime");
 
         string json = await SendAsync(request, ct);
         bool metric = RegionInfo.CurrentRegion.IsMetric;

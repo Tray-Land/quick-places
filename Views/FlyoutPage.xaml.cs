@@ -554,7 +554,9 @@ public sealed partial class FlyoutPage : Page, IDisposable
 
         // Open now + today's hours
         string? today = PlaceFormatting.TodayHours(d.WeekdayHours, DateTime.Now.DayOfWeek);
-        OpenPill.Visibility = d.OpenNow == true ? Visibility.Visible : Visibility.Collapsed;
+        bool closingSoon = PlaceFormatting.IsClosingSoon(d.OpenNow, d.NextCloseTime, DateTimeOffset.UtcNow);
+        OpenPill.Visibility = d.OpenNow == true && !closingSoon ? Visibility.Visible : Visibility.Collapsed;
+        ClosingSoonPill.Visibility = closingSoon ? Visibility.Visible : Visibility.Collapsed;
         ClosedPill.Visibility = d.OpenNow == false ? Visibility.Visible : Visibility.Collapsed;
 
         TodayHoursText.Text = today is null ? "" : $"Today {today}";

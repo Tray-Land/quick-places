@@ -8,6 +8,17 @@
     Background="Transparent">
 
     <Page.Resources>
+        <ResourceDictionary>
+        <ResourceDictionary.ThemeDictionaries>
+            <ResourceDictionary x:Key="Light">
+                <SolidColorBrush x:Key="ClosingSoonBrush" Color="#C25A00" />
+                <SolidColorBrush x:Key="ClosingSoonBackgroundBrush" Color="#FFF1E0" />
+            </ResourceDictionary>
+            <ResourceDictionary x:Key="Dark">
+                <SolidColorBrush x:Key="ClosingSoonBrush" Color="#FFA14A" />
+                <SolidColorBrush x:Key="ClosingSoonBackgroundBrush" Color="#3D2A14" />
+            </ResourceDictionary>
+        </ResourceDictionary.ThemeDictionaries>
         <!--
             Elements built in code take these styles, so their ThemeResource brushes follow the
             flyout's (taskbar) theme rather than the app theme.
@@ -91,6 +102,7 @@
                 </StackPanel>
             </Grid>
         </DataTemplate>
+        </ResourceDictionary>
     </Page.Resources>
 
     <Grid Padding="16,12,16,16" RowSpacing="10">
@@ -600,6 +612,23 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                                    <StackPanel
+                                        Margin="0,0,8,0"
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal"
+                                        Spacing="5"
+                                        Visibility="{x:Bind views:PlaceVisuals.VisibleIf(IsClosingSoon)}">
+                                        <Ellipse
+                                            Width="6"
+                                            Height="6"
+                                            VerticalAlignment="Center"
+                                            Fill="{ThemeResource ClosingSoonBrush}" />
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Foreground="{ThemeResource ClosingSoonBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="Closing soon" />
+                                    </StackPanel>
                         BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
                         BorderThickness="1"
                         CornerRadius="6"
@@ -803,6 +832,23 @@
                         VerticalAlignment="Center"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}" />
+                    <Border
+                        x:Name="ClosingSoonPill"
+                        Background="{ThemeResource ClosingSoonBackgroundBrush}"
+                        Style="{StaticResource PillBorderStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse
+                                Width="7"
+                                Height="7"
+                                VerticalAlignment="Center"
+                                Fill="{ThemeResource ClosingSoonBrush}" />
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource ClosingSoonBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Closing soon" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <!--  Actions  -->

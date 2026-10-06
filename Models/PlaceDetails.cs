@@ -12,6 +12,9 @@ public sealed record PlaceDetails(
     IReadOnlyList<string> WeekdayHours,
     bool? OpenNow)
 {
+    /// <summary>When the place next closes, from Google's current opening hours.</summary>
+    public DateTimeOffset? NextCloseTime { get; init; }
+
     public string? TypeLabel { get; init; }
 
     public PlaceCategory Category { get; init; }

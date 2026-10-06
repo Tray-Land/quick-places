@@ -41,6 +41,7 @@ internal static class PlacesParser
                     && on.ValueKind is JsonValueKind.True or JsonValueKind.False
                         ? on.GetBoolean()
                         : null,
+                NextCloseTime = place.TryGetProperty("currentOpeningHours", out JsonElement oh2) ? GetTime(oh2, "nextCloseTime") : null,
             });
         }
 
@@ -91,6 +92,7 @@ internal static class PlacesParser
             Rating = root.TryGetProperty("rating", out JsonElement r) && r.ValueKind == JsonValueKind.Number ? r.GetDouble() : null,
             UserRatingCount = root.TryGetProperty("userRatingCount", out JsonElement c) && c.ValueKind == JsonValueKind.Number ? c.GetInt32() : null,
             PriceLevel = ParsePriceLevel(GetString(root, "priceLevel")),
+            NextCloseTime = root.TryGetProperty("currentOpeningHours", out JsonElement coh) ? GetTime(coh, "nextCloseTime") : null,
         };
     }
 
@@ -133,6 +135,11 @@ internal static class PlacesParser
     private static string? GetString(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out JsonElement v) && v.ValueKind == JsonValueKind.String
             ? v.GetString()
+            : null;
+
+    private static DateTimeOffset? GetTime(JsonElement e, string name) =>
+        GetString(e, name) is { } s && DateTimeOffset.TryParse(s, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out DateTimeOffset t)
+            ? t
             : null;
 
     private static double GetDouble(JsonElement e, string name) =>

@@ -233,4 +233,16 @@ public class PlacesTests
     [TestMethod]
     public void MapBounds_NoPoints_Throws() =>
         Assert.ThrowsExactly<ArgumentException>(() => MapBounds.Of([]));
+
+    [TestMethod]
+    public void IsClosingSoon_OnlyWhenOpenAndClosingWithinAnHour()
+    {
+        DateTimeOffset now = new(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
+        Assert.IsTrue(PlaceFormatting.IsClosingSoon(true, now.AddMinutes(30), now));
+        Assert.IsTrue(PlaceFormatting.IsClosingSoon(true, now.AddHours(1), now));
+        Assert.IsFalse(PlaceFormatting.IsClosingSoon(true, now.AddMinutes(61), now));
+        Assert.IsFalse(PlaceFormatting.IsClosingSoon(true, null, now));
+        Assert.IsFalse(PlaceFormatting.IsClosingSoon(false, now.AddMinutes(30), now));
+        Assert.IsFalse(PlaceFormatting.IsClosingSoon(true, now.AddMinutes(-5), now));
+    }
 }

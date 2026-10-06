@@ -1,3 +1,5 @@
+using QuickPlaces.Services;
+
 namespace QuickPlaces.Models;
 
 /// <summary>One row of search results: just enough to pick a place, recognize it, and see how far away it is.</summary>
@@ -15,7 +17,13 @@ public sealed record PlaceSummary(string Id, string Name, string Address, double
     /// <summary>Open right now, closed, or null when Google has no hours for the place.</summary>
     public bool? OpenNow { get; init; }
 
-    public bool IsOpenNow => OpenNow == true;
+    /// <summary>When the place next closes, from Google's current opening hours.</summary>
+    public DateTimeOffset? NextCloseTime { get; init; }
+
+    /// <summary>Open, but closing within the hour.</summary>
+    public bool IsClosingSoon => PlaceFormatting.IsClosingSoon(OpenNow, NextCloseTime, DateTimeOffset.UtcNow);
+
+    public bool IsOpenNow => OpenNow == true && !IsClosingSoon;
 
     public bool IsClosedNow => OpenNow == false;
 

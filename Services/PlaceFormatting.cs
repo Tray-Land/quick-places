@@ -80,6 +80,10 @@ internal static class PlaceFormatting
             : ("", description.Trim());
     }
 
+    /// <summary>True when the place is open and its next closing time is within the coming hour.</summary>
+    public static bool IsClosingSoon(bool? openNow, DateTimeOffset? nextClose, DateTimeOffset now) =>
+        openNow == true && nextClose is { } t && t > now && t - now <= TimeSpan.FromHours(1);
+
     /// <summary>Today's hours ("9:00 AM – 5:00 PM", "Closed"), or null when there are none.</summary>
     public static string? TodayHours(IReadOnlyList<string> weekdayHours, DayOfWeek today)
     {

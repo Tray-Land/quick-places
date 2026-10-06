@@ -73,16 +73,9 @@ public partial class App : Application
 
         InitializeTrayIcon();
 
-        // First run: show where the app lives instead of launching into silence.
-        if (!SettingsService.HasLaunchedBefore)
-        {
-            SettingsService.HasLaunchedBefore = true;
-            ShowFlyout();
-        }
-        else
-        {
-            MemoryService.ReleaseIdle(StartupTrimDelay);
-        }
+        // Every launch opens the flyout so the user sees where the app lives.
+        SettingsService.HasLaunchedBefore = true;
+        ShowFlyout();
     }
 
     /// <summary>Sets the tray tooltip under the app name, e.g. "3 new" or null for just the name.</summary>

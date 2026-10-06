@@ -43,6 +43,69 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
+                    CornerRadius="4"
+                    RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Location" />
+                        <TextBlock
+                            x:Name="LocationDescription"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <RadioButtons
+                        x:Name="LocationChoice"
+                        Grid.Row="1"
+                        AutomationProperties.Name="Location source"
+                        SelectionChanged="LocationChoice_SelectionChanged">
+                        <RadioButton x:Name="DeviceOption" Content="Use my device's location" />
+                        <RadioButton x:Name="ZipOption" Content="Use a zip code" />
+                    </RadioButtons>
+                    <StackPanel
+                        x:Name="ZipEntry"
+                        Grid.Row="2"
+                        Spacing="8"
+                        Visibility="Collapsed">
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                x:Name="ZipBox"
+                                AutomationProperties.Name="Zip code"
+                                InputScope="Number"
+                                KeyDown="ZipBox_KeyDown"
+                                MaxLength="10"
+                                PlaceholderText="Zip code" />
+                            <Button
+                                x:Name="ZipApply"
+                                Grid.Column="1"
+                                Click="ZipApply_Click"
+                                Content="Save"
+                                Style="{StaticResource AccentButtonStyle}" />
+                        </Grid>
+                    </StackPanel>
+                    <TextBlock
+                        x:Name="LocationError"
+                        Grid.Row="3"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        TextWrapping="Wrap"
+                        Visibility="Collapsed" />
+                </Grid>
+
+                <Grid
+                    Padding="16,12"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     ColumnSpacing="12"
                     CornerRadius="4">
                     <Grid.ColumnDefinitions>

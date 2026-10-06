@@ -24,6 +24,11 @@ internal static class LocationService
             return cached;
         }
 
+        if (SettingsService.LocationMode != "device")
+        {
+            return SavedPoint ?? throw new LocationUnavailableException("Choose how to find your location: use your device or enter a zip code.");
+        }
+
         if (!await RequestAccessAsync(ct))
         {
             return SavedPoint ?? throw new LocationUnavailableException("Location access is off. Turn it on in Windows Settings > Privacy > Location, or enter a zip code.");
@@ -62,8 +67,16 @@ internal static class LocationService
     public static GeoPoint? SavedPoint =>
         SettingsService.ManualLocation is var (lat, lon) ? new GeoPoint(lat, lon) : null;
 
+    /// <summary>Records that the user chose Windows location (after access was granted).</summary>
+    public static void UseDevice()
+    {
+        SettingsService.LocationMode = "device";
+        s_last = null;
+    }
+
     public static void SaveManual(string postalCode, GeoPoint point)
     {
+        SettingsService.LocationMode = "zip";
         SettingsService.ManualPostalCode = postalCode;
         SettingsService.ManualLocation = (point.Latitude, point.Longitude);
         s_last = null;

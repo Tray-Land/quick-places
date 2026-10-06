@@ -77,6 +77,14 @@ public sealed partial class FlyoutPage : Page, IDisposable
             _hasShown = true;
             _ = CheckLocationAsync();
         }
+        else if (ChoicePanel.Visibility == Visibility.Visible && SettingsService.LocationMode is not null)
+        {
+            _ = CheckLocationAsync(); // chosen in Settings
+        }
+        else if (SearchView.Visibility == Visibility.Visible)
+        {
+            ShowSearchView(usingZip: SettingsService.LocationMode != "device"); // may have changed in Settings
+        }
 
         if (_resumeOnShow is { } resume)
         {
@@ -110,24 +118,50 @@ public sealed partial class FlyoutPage : Page, IDisposable
     // ---- Location ----------------------------------------------------------------------------
 
     /// <summary>
-    /// First thing the flyout does: check (and, if undecided, request) Windows location access.
-    /// With access, or a zip code saved earlier, the search screen shows; otherwise it asks for a zip.
+    /// First thing the flyout does: with a saved choice, go straight to search; otherwise let the user
+    /// pick device location or a zip code, so Windows' permission prompt never appears unannounced.
     /// </summary>
     private async Task CheckLocationAsync()
     {
-        bool allowed = await LocationService.RequestAccessAsync(CancellationToken.None);
-        if (allowed || LocationService.SavedPoint is not null)
+        string? mode = SettingsService.LocationMode;
+        if (mode is null && LocationService.SavedPoint is not null)
         {
-            ShowSearchView(usingZip: !allowed);
+            mode = "zip";
+        }
+
+        if (mode == "device")
+        {
+            if (await LocationService.RequestAccessAsync(CancellationToken.None))
+            {
+                ShowSearchView(usingZip: false);
+                return;
+            }
+
+            if (LocationService.SavedPoint is not null)
+            {
+                ShowSearchView(usingZip: true);
+                return;
+            }
+
+            ShowLocationPanel();
+        }
+        else if (mode == "zip" && LocationService.SavedPoint is not null)
+        {
+            ShowSearchView(usingZip: true);
+        }
+        else if (mode == "zip")
+        {
+            ShowLocationPanel();
         }
         else
         {
-            ShowLocationPanel();
+            ShowChoicePanel();
         }
     }
 
     private void ShowSearchView(bool usingZip)
     {
+        ChoicePanel.Visibility = Visibility.Collapsed;
         LocationPanel.Visibility = Visibility.Collapsed;
         SearchView.Visibility = Visibility.Visible;
         ZipNote.Visibility = usingZip ? Visibility.Visible : Visibility.Collapsed;
@@ -136,10 +170,22 @@ public sealed partial class FlyoutPage : Page, IDisposable
         FocusDefault();
     }
 
+    private void ShowChoicePanel()
+    {
+        CancelInFlight();
+        SearchView.Visibility = Visibility.Collapsed;
+        LocationPanel.Visibility = Visibility.Collapsed;
+        ChoicePanel.Visibility = Visibility.Visible;
+        ChoiceError.Visibility = Visibility.Collapsed;
+        Motion.StaggerIn(ChoicePanel.Children, startDelayMs: 40, stepMs: 50);
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => UseLocationButton.Focus(FocusState.Programmatic));
+    }
+
     private void ShowLocationPanel()
     {
         CancelInFlight();
         SearchView.Visibility = Visibility.Collapsed;
+        ChoicePanel.Visibility = Visibility.Collapsed;
         LocationPanel.Visibility = Visibility.Visible;
         ZipBox.Text = SettingsService.ManualPostalCode ?? "";
         ZipError.Visibility = Visibility.Collapsed;
@@ -149,15 +195,32 @@ public sealed partial class FlyoutPage : Page, IDisposable
 
     private void ChangeZip_Click(object sender, RoutedEventArgs e) => ShowLocationPanel();
 
-    private async void RetryLocation_Click(object sender, RoutedEventArgs e)
+    private void ChooseZip_Click(object sender, RoutedEventArgs e) => ShowLocationPanel();
+
+    private async void UseLocation_Click(object sender, RoutedEventArgs e)
     {
         if (await LocationService.RequestAccessAsync(CancellationToken.None))
         {
+            LocationService.UseDevice();
             ShowSearchView(usingZip: false);
         }
         else
         {
-            ShowZipError("Location is still off. Turn it on in Windows Settings > Privacy > Location, or enter a zip code.");
+            ChoiceError.Text = "Location is off for this app. Turn it on in Windows Settings > Privacy > Location, or enter a zip code.";
+            ChoiceError.Visibility = Visibility.Visible;
+        }
+    }
+
+    private async void RetryLocation_Click(object sender, RoutedEventArgs e)
+    {
+        if (await LocationService.RequestAccessAsync(CancellationToken.None))
+        {
+            LocationService.UseDevice();
+            ShowSearchView(usingZip: false);
+        }
+        else
+        {
+            ShowZipError("Location is off for this app. Turn it on in Windows Settings > Privacy > Location, or enter a zip code.");
         }
     }
 

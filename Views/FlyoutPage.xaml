@@ -190,7 +190,56 @@
                 TextWrapping="Wrap" />
         </StackPanel>
 
-        <!--  Location: shown when Windows location isn't available and no zip code is saved  -->
+        <!--  First run: let the user pick how to be located before any permission prompt  -->
+        <StackPanel
+            x:Name="ChoicePanel"
+            Grid.Row="2"
+            Margin="0,32,0,0"
+            HorizontalAlignment="Center"
+            Spacing="12"
+            Visibility="Collapsed">
+            <Border
+                Width="56"
+                Height="56"
+                HorizontalAlignment="Center"
+                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                CornerRadius="16">
+                <FontIcon
+                    FontSize="24"
+                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                    Glyph="&#xE707;" />
+            </Border>
+            <TextBlock
+                HorizontalAlignment="Center"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Find places near you" />
+            <TextBlock
+                MaxWidth="280"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="Use your device's location, or enter a zip code instead. You can change this later."
+                TextAlignment="Center"
+                TextWrapping="Wrap" />
+            <Button
+                x:Name="UseLocationButton"
+                HorizontalAlignment="Center"
+                Click="UseLocation_Click"
+                Content="Use my location"
+                Style="{StaticResource AccentButtonStyle}" />
+            <Button
+                HorizontalAlignment="Center"
+                Click="ChooseZip_Click"
+                Content="Enter a zip code" />
+            <TextBlock
+                x:Name="ChoiceError"
+                MaxWidth="280"
+                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                TextAlignment="Center"
+                TextWrapping="Wrap"
+                Visibility="Collapsed" />
+        </StackPanel>
+
+        <!--  Zip entry  -->
         <StackPanel
             x:Name="LocationPanel"
             Grid.Row="2"
@@ -216,14 +265,14 @@
             <TextBlock
                 MaxWidth="280"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="Location access is off, so enter your zip code to search near you."
+                Text="Enter your zip code to search near you."
                 TextAlignment="Center"
                 TextWrapping="Wrap" />
             <TextBox
                 x:Name="ZipBox"
                 Width="200"
                 AutomationProperties.Name="Zip code"
-                InputScope="PostalCode"
+                InputScope="Number"
                 KeyDown="ZipBox_KeyDown"
                 MaxLength="10"
                 PlaceholderText="Zip code" />
@@ -244,7 +293,7 @@
             <HyperlinkButton
                 HorizontalAlignment="Center"
                 Click="RetryLocation_Click"
-                Content="Try location again" />
+                Content="Use my location instead" />
         </StackPanel>
 
         <!--  Search  -->
@@ -568,6 +617,23 @@
                                         HorizontalAlignment="Right"
                                         Orientation="Horizontal"
                                         Spacing="5"
+                                        Visibility="{x:Bind views:PlaceVisuals.VisibleIf(IsClosingSoon)}">
+                                        <Ellipse
+                                            Width="6"
+                                            Height="6"
+                                            VerticalAlignment="Center"
+                                            Fill="{ThemeResource ClosingSoonBrush}" />
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Foreground="{ThemeResource ClosingSoonBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="Closing soon" />
+                                    </StackPanel>
+                                    <StackPanel
+                                        Margin="0,0,8,0"
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal"
+                                        Spacing="5"
                                         Visibility="{x:Bind views:PlaceVisuals.VisibleIf(IsClosedNow)}">
                                         <Ellipse
                                             Width="6"
@@ -612,23 +678,6 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
-                                    <StackPanel
-                                        Margin="0,0,8,0"
-                                        HorizontalAlignment="Right"
-                                        Orientation="Horizontal"
-                                        Spacing="5"
-                                        Visibility="{x:Bind views:PlaceVisuals.VisibleIf(IsClosingSoon)}">
-                                        <Ellipse
-                                            Width="6"
-                                            Height="6"
-                                            VerticalAlignment="Center"
-                                            Fill="{ThemeResource ClosingSoonBrush}" />
-                                        <TextBlock
-                                            FontWeight="SemiBold"
-                                            Foreground="{ThemeResource ClosingSoonBrush}"
-                                            Style="{StaticResource CaptionTextBlockStyle}"
-                                            Text="Closing soon" />
-                                    </StackPanel>
                         BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
                         BorderThickness="1"
                         CornerRadius="6"
@@ -784,6 +833,23 @@
                         </StackPanel>
                     </Border>
                     <Border
+                        x:Name="ClosingSoonPill"
+                        Background="{ThemeResource ClosingSoonBackgroundBrush}"
+                        Style="{StaticResource PillBorderStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse
+                                Width="7"
+                                Height="7"
+                                VerticalAlignment="Center"
+                                Fill="{ThemeResource ClosingSoonBrush}" />
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource ClosingSoonBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Closing soon" />
+                        </StackPanel>
+                    </Border>
+                    <Border
                         x:Name="ClosedPill"
                         Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
                         Style="{StaticResource PillBorderStyle}">
@@ -832,23 +898,6 @@
                         VerticalAlignment="Center"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}" />
-                    <Border
-                        x:Name="ClosingSoonPill"
-                        Background="{ThemeResource ClosingSoonBackgroundBrush}"
-                        Style="{StaticResource PillBorderStyle}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse
-                                Width="7"
-                                Height="7"
-                                VerticalAlignment="Center"
-                                Fill="{ThemeResource ClosingSoonBrush}" />
-                            <TextBlock
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource ClosingSoonBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Closing soon" />
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
 
                 <!--  Actions  -->

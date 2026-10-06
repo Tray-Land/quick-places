@@ -46,6 +46,13 @@ internal static class SettingsService
         set => Set(nameof(ManualPostalCode), value);
     }
 
+    /// <summary>How the user chose to be located: "device" (Windows location), "zip", or null if not chosen yet.</summary>
+    public static string? LocationMode
+    {
+        get => Get<string?>(nameof(LocationMode), null);
+        set => Set(nameof(LocationMode), value);
+    }
+
     private static double? GetDouble(string key) => Get<double?>(key, null) is { } v ? v : null;
 
     /// <summary>Where <see cref="ManualPostalCode"/> was resolved to, or null if none is saved.</summary>

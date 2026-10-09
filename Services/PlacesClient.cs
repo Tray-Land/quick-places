@@ -50,10 +50,15 @@ internal sealed class PlacesClient
         string json = await SendAsync(request, ct);
         bool metric = RegionInfo.CurrentRegion.IsMetric;
         return PlacesParser.ParseSearch(json)
-            .Select(p => p with
+            .Select(p =>
             {
-                DistanceText = PlaceFormatting.FormatDistance(
-                    PlaceFormatting.DistanceMeters(origin.Latitude, origin.Longitude, p.Latitude, p.Longitude), metric),
+                double meters = PlaceFormatting.DistanceMeters(origin.Latitude, origin.Longitude, p.Latitude, p.Longitude);
+                return p with
+                {
+                    DistanceText = origin.PostalCode is { Length: > 0 } zip
+                        ? PlaceFormatting.FormatZipDistance(meters, metric, zip)
+                        : PlaceFormatting.FormatDistance(meters, metric),
+                };
             })
             .ToList();
     }

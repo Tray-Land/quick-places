@@ -80,6 +80,16 @@ public class PlacesTests
     }
 
     [TestMethod]
+    public void FormatZipDistance_SaysInZipNearbyAndFromZipFarther()
+    {
+        CultureInfo c = CultureInfo.InvariantCulture;
+        Assert.AreEqual("In 98052", PlaceFormatting.FormatZipDistance(400, metric: false, "98052", c));
+        Assert.AreEqual("In 98052", PlaceFormatting.FormatZipDistance(1500, metric: true, "98052", c));
+        Assert.AreEqual("3.4 mi from 98052", PlaceFormatting.FormatZipDistance(5472, metric: false, "98052", c));
+        Assert.AreEqual("5.5 km from SW1A 1AA", PlaceFormatting.FormatZipDistance(5472, metric: true, "SW1A 1AA", c));
+    }
+
+    [TestMethod]
     public void DistanceMeters_OneDegreeOfLatitudeIsAbout111Km()
     {
         double m = PlaceFormatting.DistanceMeters(43, -88, 44, -88);

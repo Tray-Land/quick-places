@@ -2,7 +2,8 @@ using Windows.Devices.Geolocation;
 
 namespace QuickPlaces.Services;
 
-internal readonly record struct GeoPoint(double Latitude, double Longitude);
+/// <summary>A point; <see cref="PostalCode"/> is set when it's a zip code's center rather than the device's position.</summary>
+internal readonly record struct GeoPoint(double Latitude, double Longitude, string? PostalCode = null);
 
 internal sealed class LocationUnavailableException(string message) : Exception(message);
 
@@ -65,7 +66,7 @@ internal static class LocationService
 
     /// <summary>The location resolved from the zip code the user entered, if any.</summary>
     public static GeoPoint? SavedPoint =>
-        SettingsService.ManualLocation is var (lat, lon) ? new GeoPoint(lat, lon) : null;
+        SettingsService.ManualLocation is var (lat, lon) ? new GeoPoint(lat, lon, SettingsService.ManualPostalCode) : null;
 
     /// <summary>Records that the user chose Windows location (after access was granted).</summary>
     public static void UseDevice()

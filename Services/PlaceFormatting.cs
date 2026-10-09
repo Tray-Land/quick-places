@@ -33,6 +33,25 @@ internal static class PlaceFormatting
     }
 
     /// <summary>
+    /// Distance from a zip code's center, which isn't where the user is: a place within about a
+    /// mile reads as "In 98052" rather than a misleadingly precise "0.3 mi", and farther places
+    /// say what the distance is measured from ("3.4 mi from 98052").
+    /// </summary>
+    public static string FormatZipDistance(double meters, bool metric, string postalCode, CultureInfo? culture = null)
+    {
+        culture ??= CultureInfo.CurrentCulture;
+        if (meters < 1609.344)
+        {
+            return $"In {postalCode}";
+        }
+
+        string distance = metric
+            ? string.Create(culture, $"{meters / 1000:0.#} km")
+            : string.Create(culture, $"{meters / 1609.344:0.#} mi");
+        return $"{distance} from {postalCode}";
+    }
+
+    /// <summary>
     /// A <c>tel:</c> URI a phone's camera app offers to dial. Prefers the international number
     /// (which carries the country code), keeping only digits and a leading plus.
     /// </summary>

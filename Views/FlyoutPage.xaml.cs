@@ -653,7 +653,6 @@ public sealed partial class FlyoutPage : Page, IDisposable
         string? tel = PlaceFormatting.TelUri(d.InternationalPhone, d.NationalPhone);
         PhoneText.Text = d.NationalPhone ?? d.InternationalPhone ?? "";
         QrImage.Source = tel is null ? null : QrCodeRenderer.Render(tel);
-        PhoneCard.Visibility = tel is null ? Visibility.Collapsed : Visibility.Visible;
 
         // Hours table, today highlighted
         HoursPanel.Children.Clear();
@@ -666,6 +665,7 @@ public sealed partial class FlyoutPage : Page, IDisposable
         NoHoursText.Visibility = d.WeekdayHours.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         SetDetailSectionsVisible(true);
+        PhoneCard.Visibility = tel is null ? Visibility.Collapsed : Visibility.Visible;
         Motion.StaggerIn([StatusRow, RatingRow, ActionBar, PhoneCard, HoursCard, AddressCard], startDelayMs: 140, stepMs: 45);
         if (PhoneCard.Visibility == Visibility.Visible)
         {

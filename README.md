@@ -17,7 +17,9 @@ Search requests ask for names, addresses, place types and open-now only, which b
 
 ## Install
 
-Requires Windows 10 2004+ or Windows 11, x64 or ARM64. Build from source (below) or download the MSIX from a GitHub release. If sideloading, install the signing certificate first.
+Requires Windows 10 2004+ or Windows 11, x64 or ARM64.
+
+Download and open [QuickPlaces.appinstaller](https://github.com/Tray-Land/quick-places/releases/latest/download/QuickPlaces.appinstaller). Windows installs the right version for your PC and keeps it updated. Or build from source (below).
 
 ## Setup
 
@@ -43,7 +45,8 @@ Prerequisites: .NET 10 SDK, `winget install Microsoft.WinAppCli`.
 ```powershell
 winapp run                      # build and run with package identity
 dotnet test QuickPlaces.Tests   # parser, formatting and map-bounds tests
-.\build-msix-for-gh.ps1         # signed x64 + ARM64 MSIX and a draft GitHub release
+.\build-msix-for-gh.ps1         # signed x64 + ARM64 .msixbundle, App Installer feed, draft GitHub release
+.\build-msix-for-gh.ps1 -VerifyPublished   # after publishing the draft (keep its tag): checks the stable link and feed
 ```
 
 ## License

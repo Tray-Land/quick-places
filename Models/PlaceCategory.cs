@@ -183,8 +183,8 @@ public static class PlaceCategories
     };
 
     /// <summary>The start screen's one-tap searches.</summary>
-    public static IReadOnlyList<QuickCategory> Quick { get; } =
-    [
+    public static IReadOnlyList<QuickCategory> Quick { get; } = new QuickCategory[]
+    {
         new("Coffee", "coffee", PlaceCategory.Cafe),
         new("Food", "restaurants", PlaceCategory.Food),
         new("Groceries", "grocery store", PlaceCategory.Grocery),
@@ -193,7 +193,7 @@ public static class PlaceCategories
         new("ATM", "atm", PlaceCategory.Finance),
         new("Parks", "park", PlaceCategory.Outdoors),
         new("Hotels", "hotel", PlaceCategory.Lodging),
-    ];
+    };
 
     /// <summary>
     /// The category for a place: its primary type wins; otherwise the first of its other types that

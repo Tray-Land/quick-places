@@ -102,13 +102,13 @@ public sealed partial class SettingsPage : Page
             return;
         }
 
-        if (LocationChoice.SelectedItem == ZipOption)
+        if (ReferenceEquals(LocationChoice.SelectedItem, ZipOption))
         {
             ZipEntry.Visibility = Visibility.Visible;
             LocationError.Visibility = Visibility.Collapsed;
             ZipBox.Focus(FocusState.Programmatic);
         }
-        else if (LocationChoice.SelectedItem == DeviceOption)
+        else if (ReferenceEquals(LocationChoice.SelectedItem, DeviceOption))
         {
             // Asking now is fine: the user just picked this, so the Windows prompt isn't a surprise.
             if (await LocationService.RequestAccessAsync(CancellationToken.None))

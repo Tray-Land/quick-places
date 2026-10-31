@@ -554,7 +554,7 @@ public sealed partial class FlyoutPage : Page, IDisposable
         if (forward is not null)
         {
             forward.Configuration = new GravityConnectedAnimationConfiguration();
-            forward.TryStart(HeroTile, [HeroText]);
+            forward.TryStart(HeroTile, new UIElement[] { HeroText });
         }
         else
         {

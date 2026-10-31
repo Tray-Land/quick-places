@@ -21,6 +21,10 @@ internal static class Motion
     /// Fades and slides elements up into place one after another. Call after they become visible;
     /// <paramref name="startDelayMs"/> leaves room for a connected animation to lead.
     /// </summary>
+    public static void StaggerIn(UIElement[] elements, int startDelayMs = 0, int stepMs = 40, float distance = 16)
+        => StaggerIn((IEnumerable<UIElement>)elements, startDelayMs, stepMs, distance);
+
+    /// <inheritdoc cref="StaggerIn(UIElement[], int, int, float)"/>
     public static void StaggerIn(IEnumerable<UIElement> elements, int startDelayMs = 0, int stepMs = 40, float distance = 16)
     {
         int index = 0;

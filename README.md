@@ -17,6 +17,8 @@ Search requests ask for names, addresses, place types and open-now only, which b
 
 ## Install
 
+[<img src="docs/MSIX.svg" alt="Install QuickPlaces (MSIX)" width="212">](https://github.com/Tray-Land/quick-places/releases/latest/download/QuickPlaces.appinstaller)
+
 Requires Windows 10 2004+ or Windows 11, x64 or ARM64.
 
 Download and open [QuickPlaces.appinstaller](https://github.com/Tray-Land/quick-places/releases/latest/download/QuickPlaces.appinstaller). Windows installs the right version for your PC and keeps it updated. Or build from source (below).

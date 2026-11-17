@@ -42,7 +42,7 @@ Windows location access must be on (Settings > Privacy & security > Location).
 
 ## Build from source
 
-Prerequisites: .NET 10 SDK, `winget install Microsoft.WinAppCli`.
+Prerequisites: .NET 11 SDK, `winget install Microsoft.WinAppCli`.
 
 ```powershell
 winapp run                      # build and run with package identity
